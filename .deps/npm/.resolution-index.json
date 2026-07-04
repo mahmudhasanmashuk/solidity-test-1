@@ -33,6 +33,14 @@
       }
     }
   },
+  "contracts/FallbackExample.sol": {
+    "__sources__": {
+      "contracts/FallbackExample.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.7;\r\n\r\ncontract FallbackExample {\r\n    uint256 public result;\r\n\r\n    receive() external payable {\r\n        result = 1;\r\n    }\r\n\r\n    fallback() external payable {\r\n        result = 2;\r\n    }\r\n}",
+        "file": "contracts/FallbackExample.sol"
+      }
+    }
+  },
   "contracts/PriceConverter.sol": {
     "./AggregatorV3Interface.sol": "contracts/AggregatorV3Interface.sol"
   },
@@ -40,7 +48,7 @@
     "./PriceConverter.sol": "contracts/PriceConverter.sol",
     "__sources__": {
       "contracts/FundMe.sol": {
-        "content": "// Get Funds from users\r\n// Withdraw funds\r\n// Set a minimum funding value in USD\r\n\r\n// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.7;\r\n\r\nimport \"./PriceConverter.sol\";\r\n\r\ncontract FundMe {\r\n    using PriceConverter for uint256;\r\n\r\n    uint256 public minimumUSD = 50 * 1e18;\r\n\r\n    address[] public funders;\r\n    mapping(address => uint256) public addressToAmountFunded;\r\n\r\n    address public owner;\r\n\r\n    constructor() {\r\n        owner = msg.sender;\r\n    }\r\n\r\n    modifier onlyOwner {\r\n        require(msg.sender == owner, \"Sender is not the owner\");\r\n        _;\r\n    }\r\n\r\n    function fund() public payable {\r\n        // set a minimum funding value in USD\r\n        // How do we send ETH to this contract?\r\n        require(msg.value.getConversionRate() >= minimumUSD, \"Minimum required fund not met\");\r\n        funders.push(msg.sender);\r\n        addressToAmountFunded[msg.sender] = msg.value;\r\n    }\r\n\r\n    function withdraw() public onlyOwner {\r\n        for(uint256 i = 0; i<funders.length; i++){\r\n            address funder = funders[i];\r\n            addressToAmountFunded[funder] = 0;\r\n        }\r\n\r\n        // reset the address\r\n        funders = new address[](0);\r\n\r\n        // send ether\r\n        (bool callSuccess,) = payable(msg.sender).call{value: address(this).balance}(\"\");\r\n        require(callSuccess, \"Call failed\");\r\n    }   \r\n\r\n\r\n    \r\n\r\n}",
+        "content": "// Get Funds from users\r\n// Withdraw funds\r\n// Set a minimum funding value in USD\r\n\r\n// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.7;\r\n\r\nimport \"./PriceConverter.sol\";\r\n\r\ncontract FundMe {\r\n    using PriceConverter for uint256;\r\n\r\n    uint256 public constant MINIMUM_USD = 4 * 1e18;\r\n\r\n    address[] public funders;\r\n    mapping(address => uint256) public addressToAmountFunded;\r\n\r\n    address public immutable i_owner;\r\n\r\n    constructor() {\r\n        i_owner = msg.sender;\r\n    }\r\n\r\n    modifier onlyOwner {\r\n        require(msg.sender == i_owner, \"Sender is not the owner\");\r\n        _;\r\n    }\r\n\r\n    function fund() public payable {\r\n        // set a minimum funding value in USD\r\n        // How do we send ETH to this contract?\r\n        require(msg.value.getConversionRate() >= MINIMUM_USD, \"Minimum required fund not met\");\r\n        funders.push(msg.sender);\r\n        addressToAmountFunded[msg.sender] = msg.value;\r\n    }\r\n\r\n    function withdraw() public onlyOwner {\r\n        for(uint256 i = 0; i<funders.length; i++){\r\n            address funder = funders[i];\r\n            addressToAmountFunded[funder] = 0;\r\n        }\r\n\r\n        // reset the address\r\n        funders = new address[](0);\r\n\r\n        // send ether\r\n        (bool callSuccess,) = payable(msg.sender).call{value: address(this).balance}(\"\");\r\n        require(callSuccess, \"Call failed\");\r\n    }   \r\n\r\n\r\n    // what if somebody sends eth to this contract without calling this fund() function?\r\n\r\n    receive() external payable {\r\n        fund();\r\n    }\r\n\r\n    fallback() external payable {\r\n        fund();\r\n    }\r\n\r\n    \r\n\r\n}",
         "file": "contracts/FundMe.sol"
       },
       "contracts/PriceConverter.sol": {
