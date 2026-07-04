@@ -49,6 +49,6 @@ contract FundMe {
     }   
 
 
-    // Hey how you doing
+    
 
 }
